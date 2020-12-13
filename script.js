@@ -1,94 +1,134 @@
-const $ = (s, o = document) => o.querySelector(s);
-const $$ = (s, o = document) => o.querySelectorAll(s);
+class App {
+ 
+ 
+ 	select = e => document.querySelector(e);
+	selectAll = e => document.querySelectorAll(e); 
+	mainTl = gsap.timeline();
+	heartFill = this.select('.heartFill');
+	maxDrag = 705;
+	heartFillMaxPosY = -50;
+	draggerProp = gsap.getProperty('.dragger');
+	trackTween = null;
+ 
+  constructor(){
+		
+		let followerVX = 0;
+		let liquidFollowerY = 0;
+		let followerProp = gsap.getProperty('.follower');
+		gsap.set('.heartFill', {
+		 transformOrigin:'50% 0%'
+		})      
+		this.myDragger = Draggable.create('.dragger', {
+			type:'x',
+			bounds:{minX:0, maxX:this.maxDrag, minY:0, maxY:0},
+			onDrag:this.onDrag,
+			onPress: (e) => {
+				gsap.to('.heartChat', {
+					duration: 0.1,
+					scale: 0.98
+				})
+			},
+			onRelease: (e) => {
+				gsap.to('.heartChat', {
+					duration: 0.6,
+					scale: 1,
+					ease: 'elastic(0.93, 0.35)'
+				})
+			},
+			onThrowUpdate:this.onDrag,
+			inertia:true,
+			callbackScope: this,
+			overshootTolerance:0,
+			throwResistance: 8000
+		})   
+    
+			gsap.set('.heartChat', {
+				x: -18,
+				y: 235,
+				transformOrigin:'50% 105%'
+			})   		
+ 		
+   gsap.to('.follower', {
+    x:'+=0',
+    repeat:-1,
+    modifiers:{
+     x: gsap.utils.unitize((x) => {   
+      followerVX += (this.draggerProp('x') - followerProp('x')) * 0.08;
+      liquidFollowerY += (this.draggerProp('x') - followerProp('x')) * 0.98;
+      followerVX *= 0.79;
+      liquidFollowerY *= 0.4;
+      return followerProp('x') + followerVX;    
+     })
+    }
+   })   
+   gsap.to('.liquidFollower', 31, {
+    x:'+=0',
+    repeat:-1,
+    modifiers:{
+     x: (x) => {   
+      liquidFollowerY += (this.draggerProp('x') - gsap.getProperty('.liquidFollower', 'x')) * 0.98;
+      liquidFollowerY *= 0.54;
+      return  followerProp('x') + liquidFollowerY ;    
+     }
+    }
+   })   
+   
+   gsap.to('.heartChat', {
+    rotation:'+=0',
+    repeat:-1,
+    ease: 'linear',
+    modifiers:{
+     rotation: gsap.utils.unitize((rotation) => {
+      let val = rotation+followerVX*0.595
+       return -val;
+     })
+    }
+   })
+   gsap.to('.heartFill', {
+    rotation:'+=0',
+    repeat:-1,
+    ease: 'linear',
+    modifiers: {
+     rotation: gsap.utils.unitize((rotation) => {
+      let val = rotation+liquidFollowerY*0.5;
+       return (val)
+     })
+    }
+   })
+   
+   this.onDrag();
 
-let emoji = $('.emoji-slider'),
-    button = $('button', emoji),
-    slider = $('.slide', emoji),
-    drag = $('div', slider),
-    smiley = $('.smiley', emoji),
-    points = {
-        0: {
-            name: 'awful',
-            mouth: 'M32,2 C41.5729357,2 58,10.8218206 58,21 C50.2396023,18.9643641 41.5729357,17.9465462 32,17.9465462 C22.4270643,17.9465462 13.7603977,18.9643641 6,21 C6,10.8218206 22.4270643,2 32,2 Z',
-            eye: 'M12.6744144,18.0128897 C17.3794842,15.6567898 19.3333811,9.83072065 17.0385652,5 C15.7595661,7.57089081 13.5517099,9.64170285 10.4149967,11.2124361 C7.27828344,12.7831694 3.80661788,13.5564215 0,13.5321925 C2.2948159,18.3629131 7.9693445,20.3689896 12.6744144,18.0128897 Z'
-        },
-        61: {
-            name: 'bad',
-            mouth: 'M32,6 C41.5729357,6 62,10.80044 62,23 C52.2396023,17.5602347 42.2396023,14.840352 32,14.840352 C21.7603977,14.840352 11.7603977,17.5602347 2,23 C2,10.80044 22.4270643,6 32,6 Z',
-            eye: 'M9,19 C14.418278,19 17,15.418278 17,11 C17,6.581722 14.418278,3 9,3 C3.581722,3 1,6.581722 1,11 C1,15.418278 3.581722,19 9,19 Z'
-        },
-        134: {
-            name: 'okay',
-            mouth: 'M32,11.3326144 C41.5729357,11.3326144 51.5729357,9.55507624 62,4 C62,12.8056732 46.3594035,23 32,23 C17.6405965,23 2,12.8056732 2,4 C12.4270643,9.55507624 22.4270643,11.3326144 32,11.3326144 Z',
-            eye: 'M9,19 C14.418278,19 17,15.418278 17,11 C17,6.581722 14.418278,3 9,3 C3.581722,3 1,6.581722 1,11 C1,15.418278 3.581722,19 9,19 Z'
-        },
-        207: {
-            name: 'good',
-            mouth: 'M32,6.33261436 C41.5729357,6.33261436 51.5729357,5.55507624 62,0 C62,8.80567319 46.3594035,25 32,25 C17.6405965,25 2,8.80567319 2,0 C12.4270643,5.55507624 22.4270643,6.33261436 32,6.33261436 Z',
-            eye: 'M9,21 C13.418278,21 17,16.418278 17,11 C17,5.581722 13.418278,1 9,1 C4.581722,1 1,5.581722 1,11 C1,16.418278 4.581722,21 9,21 Z'
-        },
-        264: {
-            name: 'great',
-            mouth: 'M32,6.33261436 C41.5729357,6.33261436 53.5729357,5.55507624 64,0 C64,8.80567319 51.3594035,27 32,27 C12.6405965,27 0,8.80567319 0,0 C10.4270643,5.55507624 22.4270643,6.33261436 32,6.33261436 Z',
-            eye: 'M9,22 C13.418278,22 17,16.418278 17,11 C17,5.581722 13.418278,0 9,0 C4.581722,0 1,5.581722 1,11 C1,16.418278 4.581722,22 9,22 Z'
-        }
-    };
+  }
+ 
+onDrag(){
+    //console.log(this.particlePool)
+		let posX = this.draggerProp('x');
+		let progress = posX / this.maxDrag;
+		gsap.to('.heartChat', 0.1, {
+			x: posX - 18
+		})   
+    let percent = progress * 100;
+    let percentY = progress * this.heartFillMaxPosY;
+   //console.log(`0% ${percent}%`)
+		this.trackTween = gsap.to('.track',  {
+		drawSVG: `100% ${percent}%`,
+		ease: 'elastic(0.4, 0.16)'
+		})
+		gsap.to('.heartFill', {
+		 duration: 0.1,
+		 y: percentY
+		})
+   
+   if(progress == 1){    
+    //you reached the end
+   }
+  }  
 
-// gsap.registerPlugin(MorphSVGPlugin);
-gsap.registerPlugin(InertiaPlugin);
-
-function setEmoji(value, duration = .4) {
-    let index = value == 0 ? value : Object.keys(points).indexOf(value),
-        name = points[value].name,
-        computed = getComputedStyle(emoji);
-    emoji.classList.remove('awful', 'bad', 'okay', 'good', 'great');
-    emoji.classList.add(name, 'scale');
-    gsap.to(emoji, {
-        '--y': index * -100 + '%',
-        '--gradient-start': computed.getPropertyValue('--' + name + '-gradient-start'),
-        '--gradient-end': computed.getPropertyValue('--' + name + '-gradient-end'),
-        '--fill': computed.getPropertyValue('--' + name + '-fill'),
-        '--radial': computed.getPropertyValue('--' + name + '-radial'),
-        '--border': computed.getPropertyValue('--' + name + '-border'),
-        '--shadow': computed.getPropertyValue('--' + name + '-shadow'),
-        '--mouth-fill': computed.getPropertyValue('--' + name + '-mouth-fill'),
-        '--mouth-shadow': computed.getPropertyValue('--' + name + '-mouth-shadow'),
-        '--mouth-shine': computed.getPropertyValue('--' + name + '-mouth-shine'),
-        '--color': computed.getPropertyValue('--' + name + '-color'),
-        duration: duration
-    });
-    gsap.to($$('.eye path', smiley), {
-        morphSVG: points[value].eye,
-        duration: .4
-    });
-    gsap.to($('.mouth path', smiley), {
-        morphSVG: points[value].mouth,
-        duration: .4
-    });
-    setTimeout(() => emoji.classList.remove('scale'), 600);
-    return value;
 }
 
-Draggable.create(drag, {
-    type: 'x',
-    bounds: {
-        left: -drag.offsetWidth / 2,
-        width: slider.offsetWidth + drag.offsetWidth
-    },
-    inertia: true,
-    snap(value) {
-        return setEmoji(Object.keys(points).reduce((p, c) => {
-            return (Math.abs(c - value) < Math.abs(p - value) ? c : p);
-        }));
-    }
-});
 
-button.addEventListener('click', e => {
-    let x = Draggable.get(drag).x,
-        value = Object.keys(points).reduce((p, c) => {
-            return (Math.abs(c - x) < Math.abs(p - x) ? c : p);
-        });
-    alert('Selected: ' + points[value].name);
-});
+gsap.set('#loveSliderSVG', {
+  visibility: 'visible'
+})
 
-setEmoji(0, 0);
+new App();
