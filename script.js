@@ -3,6 +3,8 @@ var hitElement = document.querySelector( '.hits' );
 document.body.onkeyup = function(e) {
   if( e.keyCode == 32 ) {
     addHit();
+    var koni = document.getElementById("koni");
+  koni.style.display = "none"
   }
 }
 
