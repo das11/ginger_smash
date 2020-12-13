@@ -34,7 +34,7 @@ let emoji = $('.emoji-slider'),
         }
     };
 
-gsap.registerPlugin(MorphSVGPlugin);
+// gsap.registerPlugin(MorphSVGPlugin);
 gsap.registerPlugin(InertiaPlugin);
 
 function setEmoji(value, duration = .4) {
